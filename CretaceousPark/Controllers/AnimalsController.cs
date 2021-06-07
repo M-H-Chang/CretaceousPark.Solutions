@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace CretaceousPark.Controllers
 {
-  [Route("api/[controller")]
+  [Route("api/[controller]")]
   [ApiController]
   public class AnimalsController : ControllerBase
   {
@@ -18,10 +18,24 @@ namespace CretaceousPark.Controllers
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Animal>>> Get()
+    public async Task<ActionResult<IEnumerable<Animal>>> Get(string species, string gender, string name)
     {
-      return await _db.Animals.ToListAsync();
+      var query = _db.Animals.AsQueryable();
+      if (species != null)
+      {
+        query = query.Where(entry => entry.Species == species);
+      }
+      if (gender != null)
+      {
+        query = query.Where(entry => entry.Gender == gender);
+      }
+      if (name != null)
+      {
+        query = query.Where(entry => entry.Name == name);
+      }
+      return await query.ToListAsync();
     }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<Animal>> GetAnimal(int id)
     {
@@ -67,6 +81,18 @@ namespace CretaceousPark.Controllers
     private bool AnimalExists(int id)
     {
       return _db.Animals.Any(e => e.AnimalId == id);
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAnimal(int id)
+    {
+      var animal = await _db.Animals.FindAsync(id);
+      if (animal == null)
+      {
+        return NotFound();
+      }
+      _db.Animals.Remove(animal);
+      await _db.SaveChangesAsync();
+      return NoContent();
     }
   }
 }
